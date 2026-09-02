@@ -6,9 +6,18 @@ const formulario = document.getElementById('form-paciente');
 const tabela = document.getElementById('tabela-pacientes');
 
 // Função responsável por adicionar um paciente ao array
-function adicionarPaciente(nome, email, nascimento) {
-  const novoPaciente = { nome, email, nascimento };
+function adicionarPaciente(nome, email, nascimento, telefone) {
+  const novoPaciente = { nome, email, nascimento, telefone };
+  console.log(novoPaciente);
   pacientes.push(novoPaciente);
+}
+function calcaularIdade(nascimento){
+  const hoje = new Date();
+  const nasceu = new Date(nascimento);
+
+  let idade = hoje.getFullYear() - nasceu.getFullYear();
+
+  const mesAtual
 }
 
 // Função responsável por desenhar a tabela inteira a partir do array
@@ -22,6 +31,7 @@ function renderizarTabela() {
       <td>${paciente.nome}</td>
       <td>${paciente.email}</td>
       <td>${formatarData(paciente.nascimento)}</td>
+      <td>${paciente.telefone}</td>
     `;
 
     tabela.appendChild(linha);
@@ -41,8 +51,9 @@ formulario.addEventListener('submit', (event) => {
   const nome = document.getElementById('nome').value;
   const email = document.getElementById('email').value;
   const nascimento = document.getElementById('nascimento').value;
+  const telefone = document.getElementById('telefone').value;
 
-  adicionarPaciente(nome, email, nascimento);
+  adicionarPaciente(nome, email, nascimento, telefone);
   renderizarTabela();
 
   formulario.reset(); // limpa os campos do formulário
