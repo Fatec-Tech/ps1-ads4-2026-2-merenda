@@ -33,7 +33,7 @@ function calcaularIdade(nascimento){
   const mesAtual = hoje.getMonth();
   const mesNasc = nasceu.getMonth();
 
-  if(mesAtual < mesNasc || (mesAtual === mesNasc && hoje.getDay() < nasceu.getDay())){
+  if(mesAtual < mesNasc || (mesAtual === mesNasc && hoje.getDate() < nasceu.getDate())){
     idade--;
   }
 
