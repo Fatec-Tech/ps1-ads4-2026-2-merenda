@@ -40,11 +40,17 @@ function calcaularIdade(nascimento){
   return idade;
 }
 
+function apagarPaciente(index){
+  pacientes.splice(index, 1);
+  renderizarTabela();
+}
+
+
 // Função responsável por desenhar a tabela inteira a partir do array
 function renderizarTabela() {
   tabela.innerHTML = ''; // limpa a tabela antes de redesenhar
 
-  pacientes.forEach((paciente) => {
+  pacientes.forEach((paciente, index) => {
     const linha = document.createElement('tr');
 
     linha.innerHTML = `
@@ -53,8 +59,14 @@ function renderizarTabela() {
       <td>${formatarData(paciente.nascimento)}</td>
       <td>${paciente.telefone}</td>
       <td>${paciente.idade}</td>
-      <button type="Apagar" class="btn btn-primary w-100">-</button>
+      <td><button type="button" class="btn btn-danger" data-index="${index}">Apagar</button></td>
     `;
+
+    const botao = linha.querySelector('button');
+
+    botao.addEventListener('click', () => {
+      apagarPaciente(index);
+    });
 
     tabela.appendChild(linha);
   });
