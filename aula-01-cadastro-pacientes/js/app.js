@@ -6,8 +6,10 @@ const cont = document.getElementById('cont');
 let cliques = 0;
 
 // Referências aos elementos do DOM que vamos usar várias vezes
+const inputBusca = document.getElementById('filtroNome');
 const formulario = document.getElementById('form-paciente');
 const tabela = document.getElementById('tabela-pacientes');
+const linhasTabela = document.querySelector('#tabela-pacientes tr');
 
 // Função responsável por adicionar um paciente ao array
 function adicionarPaciente(nome, email, nascimento, telefone, idade) {
@@ -44,6 +46,22 @@ function apagarPaciente(index){
   pacientes.splice(index, 1);
   renderizarTabela();
 }
+
+inputBusca.addEventListener('input', () => {
+  const termo = inputBusca.value.toLowerCase();
+
+  linhasTabela.forEach(linha =>{
+    //Pega o texto da primeira coluna(nome)
+    const nome = linha.querySelector('td').textContent.toLowerCase();
+
+    //Compara se o nome inclui o termo digitado
+    if(nome.includes(termo)){
+      linha.style.display = ''; // mostra linha
+    }else{
+      linha.style.display = 'none'; // esconde a linha
+    }
+  })
+});
 
 
 // Função responsável por desenhar a tabela inteira a partir do array
