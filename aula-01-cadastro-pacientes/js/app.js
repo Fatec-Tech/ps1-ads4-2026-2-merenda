@@ -3,13 +3,18 @@ const pacientes = [];
 
 //Contador de pacientes
 const cont = document.getElementById('cont');
-let cliques = 0;
 
 // Referências aos elementos do DOM que vamos usar várias vezes
 const inputBusca = document.getElementById('filtroNome');
 const formulario = document.getElementById('form-paciente');
 const tabela = document.getElementById('tabela-pacientes');
-const linhasTabela = document.querySelector('#tabela-pacientes tr');
+const cabecalhoNome = document.getElementById('cabecalhoNome');
+const cabecalhoIdade = document.getElementById('cabecalhoIdade');
+const cabecalhoNascimento = document.getElementById('cabecalhoNascimento');
+
+let ordemNome = 'asc';
+let ordemIdade = 'asc';
+let ordemNascimento = 'asc';
 
 // Função responsável por adicionar um paciente ao array
 function adicionarPaciente(nome, email, nascimento, telefone, idade) {
@@ -21,7 +26,9 @@ function adicionarPaciente(nome, email, nascimento, telefone, idade) {
     alert('Email já cadastrado');
   }else{
     console.log(novoPaciente);
+
     pacientes.push(novoPaciente);
+    salvarPacientes();
   }
 
 }
@@ -29,6 +36,11 @@ function adicionarPaciente(nome, email, nascimento, telefone, idade) {
 function calcaularIdade(nascimento){
   const hoje = new Date();
   const nasceu = new Date(nascimento);
+
+  if (nasceu > hoje) {
+    alert('Data de nascimento inválida');
+    return 0;
+  }
 
   let idade = hoje.getFullYear() - nasceu.getFullYear();
 
@@ -44,24 +56,76 @@ function calcaularIdade(nascimento){
 
 function apagarPaciente(index){
   pacientes.splice(index, 1);
+  salvarPacientes();
   renderizarTabela();
 }
 
-inputBusca.addEventListener('input', () => {
+function salvarPacientes() {
+  localStorage.setItem('pacientes', JSON.stringify(pacientes));
+}
+
+function carregarPacientes() {
+  const dados = localStorage.getItem('pacientes');
+
+  if (dados) {
+    const pacientesSalvos = JSON.parse(dados);
+    pacientes.push(...pacientesSalvos);
+  }
+
+  renderizarTabela();
+}
+
+function ordenarPorNome() {
+  pacientes.sort((a, b) => {
+    return ordemNome === 'asc' 
+    ? a.nome.localeCompare(b.nome)
+    : b.nome.localeCompare(a.nome);
+
+  });
+
+  ordemNome = ordemNome === 'asc' ? 'desc' : 'asc';
+  renderizarTabela();
+}
+
+function ordenarPorIdade(){
+  pacientes.sort((a, b) => {
+    return ordemIdade === 'asc' 
+    ? a.idade - b.idade
+    : b.idade - a.idade;
+  });
+
+  ordemIdade = ordemIdade === 'asc' ? 'desc' : 'asc';
+  renderizarTabela();
+}
+
+function ordenarPorNascimento(){
+  pacientes.sort((a, b) => {
+    return ordemNascimento === 'asc' 
+    ? new Date(a.nascimento) - new Date(b.nascimento)
+    : new Date(b.nascimento) - new Date(a.nascimento);
+  });
+
+  ordemNascimento = ordemNascimento === 'asc' ? 'desc' : 'asc';
+  renderizarTabela(); 
+}
+
+function filtrarTabela(){
   const termo = inputBusca.value.toLowerCase();
 
-  linhasTabela.forEach(linha =>{
-    //Pega o texto da primeira coluna(nome)
+  const linhas = tabela.querySelectorAll('tr');
+
+  linhas.forEach((linha) => {
+    //Pega o nome da primeira coluna
     const nome = linha.querySelector('td').textContent.toLowerCase();
 
-    //Compara se o nome inclui o termo digitado
+    //Mostra ou esconde a linha
     if(nome.includes(termo)){
-      linha.style.display = ''; // mostra linha
+      linha.style.display = '';
     }else{
-      linha.style.display = 'none'; // esconde a linha
+      linha.style.display = 'none';
     }
-  })
-});
+  });
+}
 
 
 // Função responsável por desenhar a tabela inteira a partir do array
@@ -84,6 +148,7 @@ function renderizarTabela() {
 
     botao.addEventListener('click', () => {
       apagarPaciente(index);
+      cont.textContent = pacientes.length;
     });
 
     tabela.appendChild(linha);
@@ -96,12 +161,21 @@ function formatarData(dataISO) {
   return `${dia}/${mes}/${ano}`;
 }
 
+//Evento disparado quando o usuário clica no cabeçalho da coluna "Nome"
+cabecalhoNome.addEventListener('click', ordenarPorNome);
+
+//Evento disparado quando o usuário clica no cabeçalho da coluna "Idade"
+cabecalhoIdade.addEventListener('click', ordenarPorIdade);
+
+//Evento disparado quando o usuário clica no cabeçalho da coluna "Nascimento"
+cabecalhoNascimento.addEventListener('click', ordenarPorNascimento);
+
+//Evento disparado quando o usuário digita no campo de busca
+inputBusca.addEventListener('input', filtrarTabela);
+
 // Evento disparado quando o formulário é enviado
 formulario.addEventListener('submit', (event) => {
   event.preventDefault(); // evita o recarregamento da página
-
-  cliques++;
-  cont.textContent = cliques;
 
   const nome = document.getElementById('nome').value;
   const email = document.getElementById('email').value;
@@ -110,7 +184,13 @@ formulario.addEventListener('submit', (event) => {
   let idade = calcaularIdade(nascimento);
 
   adicionarPaciente(nome, email, nascimento, telefone, idade);
+
+  cont.textContent = pacientes.length;
+
   renderizarTabela();
 
   formulario.reset(); // limpa os campos do formulário
 });
+
+carregarPacientes();
+cont.textContent = pacientes.length;
