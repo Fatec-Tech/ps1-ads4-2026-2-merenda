@@ -58,6 +58,7 @@ function apagarPaciente(index){
   pacientes.splice(index, 1);
   salvarPacientes();
   renderizarTabela();
+  cont.textContent = pacientes.length;
 }
 
 function salvarPacientes() {
@@ -148,10 +149,10 @@ function renderizarTabela() {
 
     botao.addEventListener('click', () => {
       apagarPaciente(index);
-      cont.textContent = pacientes.length;
     });
 
     tabela.appendChild(linha);
+    cont.textContent = pacientes.length;
   });
 }
 
@@ -185,12 +186,10 @@ formulario.addEventListener('submit', (event) => {
 
   adicionarPaciente(nome, email, nascimento, telefone, idade);
 
-  cont.textContent = pacientes.length;
-
   renderizarTabela();
 
   formulario.reset(); // limpa os campos do formulário
 });
 
 carregarPacientes();
-cont.textContent = pacientes.length;
+
