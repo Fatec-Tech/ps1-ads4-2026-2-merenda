@@ -1,5 +1,8 @@
 const pacientes = [];
 
+let pacientesJson = 0;
+let pacientesManuais = 0;
+
 const formulario = document.getElementById('form-paciente');
 const tabela = document.getElementById('tabela-pacientes');
 const mensagemCarregando = document.getElementById('carregando');
@@ -27,10 +30,26 @@ function formatarData(dataISO) {
 	return `${dia}/${mes}/${ano}`;
 }
 
+function atualizarContadores(){
+	const quantidadeJSON = document.getElementById('quantidade-json');
+	const quantidadeManual = document.getElementById('quantidade-manual');
+
+
+	quantidadeJSON.textContent = pacientesJson;
+	quantidadeManual.textContent = pacientesManuais;
+}
+
 // Nova função: busca os pacientes iniciais a partir do arquivo JSON
 async function carregarPacientesIniciais() {
 	try {
-		const resposta = await fetch('data/pacientes.json');
+		//Simula uma latência de 1 segundo antes de fazer o fetch
+		await new Promise((resolve) => setTimeout(resolve, 1000));
+
+		// URL propositalmente incorreta para testar o tratamento de erro 
+		const resposta = await fetch('data/arquivo-inexistente.json');
+		
+		//const resposta = await fetch('data/pacientes.json');
+
 		console.log(resposta);
 
 		// Nem toda resposta é sucesso — precisamos checar antes de usar
@@ -39,13 +58,28 @@ async function carregarPacientesIniciais() {
 		}
 
 		const dados = await resposta.json(); // converte a resposta em objeto JS
+		
+		//Verifica se os JSON está vazio
+		if(dados.lenght === 0){
+			tabela.innerHTML = `
+				<tr>
+					<td colspan="3">Nenhum paciente cadastrado</td>
+				</tr>
+			 `;
+
+			 mensagemCarregando.textContent = '';
+			 return;
+		}
 
 		// Adiciona cada paciente vindo do arquivo ao nosso array local
 		dados.forEach((paciente) => {
 			adicionarPaciente(paciente.nome, paciente.email, paciente.nascimento);
+			pacientesJson++;
 		});
 
 		renderizarTabela();
+		atualizarContadores();
+
 	} catch (erro) {
 		console.error('Não foi possível carregar os pacientes:', erro);
 		mensagemCarregando.textContent =
@@ -66,7 +100,10 @@ formulario.addEventListener('submit', (event) => {
 	const nascimento = document.getElementById('nascimento').value;
 
 	adicionarPaciente(nome, email, nascimento);
+	pacientesManuais++;
+
 	renderizarTabela();
+	atualizarContadores();
 
 	formulario.reset();
 });
