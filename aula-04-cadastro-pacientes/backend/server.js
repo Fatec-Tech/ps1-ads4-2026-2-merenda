@@ -47,6 +47,10 @@ app.post('/pacientes', (req, res) => {
     return res.status(400).json({ erro: 'Nome, e-mail e nascimento são obrigatórios' });
   }
 
+  if (pacientes.some((p) => p.email === email)) {
+    return res.status(409).json({ erro: 'E-mail já cadastrado' });
+  }
+
   const novoPaciente = { id: proximoId++, nome, email, nascimento };
   pacientes.push(novoPaciente);
 
