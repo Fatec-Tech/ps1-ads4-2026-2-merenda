@@ -20,6 +20,13 @@ app.get('/pacientes', (req, res) => {
   res.json(pacientes);
 });
 
+
+//READ (total) - GET /pacientes/total
+app.get('/pacientes/total', (req, res) => {
+  const totalPacientes = pacientes.length;
+  res.json({ total: totalPacientes });
+});
+
 // READ (um) — GET /pacientes/:id
 app.get('/pacientes/:id', (req, res) => {
   const id = Number(req.params.id);
