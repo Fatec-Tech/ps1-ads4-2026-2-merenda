@@ -17,8 +17,6 @@ let proximoId = 4;
 
 // READ (lista) — GET /pacientes
 app.get('/pacientes', (req, res) => {
-  res.json(pacientes);
-
   const nome = req.query.nome?.toLowerCase();
   if (nome) {
     const pacientesFiltrados = pacientes.filter((p) => p.nome.toLowerCase().includes(nome));
