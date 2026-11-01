@@ -13,8 +13,7 @@ const campoNascimento = document.getElementById('nascimento');
 const botaoSalvar = document.getElementById('btn-salvar');
 const botaoCancelar = document.getElementById('btn-cancelar');
 
-
-//Utilidade de interfaces
+// ---------- Utilidades de interface ----------
 
 function formatarData(dataISO) {
   const [ano, mes, dia] = dataISO.split('-');
