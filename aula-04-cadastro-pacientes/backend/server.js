@@ -48,10 +48,27 @@ app.get('/pacientes/:id', (req, res) => {
 app.post('/pacientes', (req, res) => {
   const { nome, email, nascimento } = req.body ?? {};
 
+  //Verifica preenchimento dos campos obrigatórios
   if (!nome || !email || !nascimento) {
     return res.status(400).json({ erro: 'Nome, e-mail e nascimento são obrigatórios' });
   }
 
+  //Verifica se a data de nascimento é válida
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0); // Zera a hora para comparar apenas a data
+  const dataNascimento = new Date(nascimento);
+
+  if (dataNascimento > hoje) {
+    return res.status(409).json({ erro: 'Data de nascimento inválida' });
+  }
+
+  //Verifica se o email é válido
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(409).json({ erro: 'E-mail inválido' });
+  }
+
+  //Verifica se o e-mail já está cadastrado
   if (pacientes.some((p) => p.email === email)) {
     return res.status(409).json({ erro: 'E-mail já cadastrado' });
   }
