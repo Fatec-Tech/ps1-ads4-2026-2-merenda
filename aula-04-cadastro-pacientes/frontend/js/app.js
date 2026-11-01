@@ -1,5 +1,5 @@
 // Em produção (Render). Para testar localmente, troque por 'http://localhost:3000/pacientes'
-const URL_API = 'https://api-clinica-glxw.onrender.com/pacientes';
+const URL_API = 'https://app-clinica-ativid.onrender.com';
 
 const formulario = document.getElementById('form-paciente');
 const tabela = document.getElementById('tabela-pacientes');
