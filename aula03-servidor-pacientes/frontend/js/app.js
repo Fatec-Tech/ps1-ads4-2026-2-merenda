@@ -1,4 +1,4 @@
-const URL_API = 'http://localhost:3000/pacientes';
+const URL_API = 'https://api-clinica-v78o.onrender.com/pacientes';
 const pacientes = [];
 
 const formulario = document.getElementById('form-paciente');
