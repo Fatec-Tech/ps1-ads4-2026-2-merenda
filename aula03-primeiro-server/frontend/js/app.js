@@ -38,24 +38,24 @@ function criarCelula(texto) {
 function renderizarTabela(pacientes) {
   tabela.innerHTML = '';
 
-  pacientes.forEach((pacientes) => {
+  pacientes.forEach((paciente) => {
     const linha = document.createElement('tr');
 
-    linha.appendChild(criarCelula(pacientes.nome));
-    linha.appendChild(criarCelula(pacientes.email));
-    linha.appendChild(criarCelula(formatarData(pacientes.nascimento)));
+    linha.appendChild(criarCelula(paciente.nome));
+    linha.appendChild(criarCelula(paciente.email));
+    linha.appendChild(criarCelula(formatarData(paciente.nascimento)));
 
     const celulaAcoes = document.createElement('td');
 
     const botaoEditar = document.createElement('button');
     botaoEditar.textContent = 'Editar';
     botaoEditar.className = 'btn btn-sm btn-outline-primary me-2';
-    botaoEditar.addEventListener('click', () => iniciarEdicao(pacientes));
+    botaoEditar.addEventListener('click', () => iniciarEdicao(paciente));
 
     const botaoExcluir = document.createElement('button');
     botaoExcluir.textContent = 'Excluir';
     botaoExcluir.className = 'btn btn-sm btn-outline-danger';
-    botaoExcluir.addEventListener('click', () => excluirPaciente(pacientes.id));
+    botaoExcluir.addEventListener('click', () => excluirPaciente(paciente.id));
 
     celulaAcoes.appendChild(botaoEditar);
     celulaAcoes.appendChild(botaoExcluir);
