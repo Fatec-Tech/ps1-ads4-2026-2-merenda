@@ -1,121 +1,144 @@
 const express = require('express');
 const cors = require('cors');
+const pool = require('./banco');
 
 const app = express();
 
-// Middlewares: rodam antes de todas as rotas
-app.use(cors());          // libera o acesso do frontend (outra origem)
-app.use(express.json());  // converte o body JSON em objeto, disponível em req.body
+app.use(cors());
+app.use(express.json());
 
-// "Banco de dados" em memória (será substituído na Aula 5)
-const pacientes = [
-  { id: 1, nome: 'Maria Silva', email: 'maria.silva@email.com', nascimento: '1990-04-12' },
-  { id: 2, nome: 'João Pereira', email: 'joao.pereira@email.com', nascimento: '1985-11-30' },
-  { id: 3, nome: 'Ana Costa', email: 'ana.costa@email.com', nascimento: '2001-07-08' },
-];
-let proximoId = 4;
+const COLUNAS = 'id, nome, email, nascimento';
+
+function dadosValidos(corpo) {
+  const { nome, email, nascimento } = corpo ?? {};
+  return Boolean(nome && email && nascimento);
+}
+
+function idValido(id) {
+  return Number.isInteger(id) && id > 0;
+}
+
+function tratarErro(res, erro) {
+  console.error(erro);
+
+  if (erro.code === '23505') {
+    // violação da restrição UNIQUE (e-mail repetido)
+    return res.status(409).json({ erro: 'Já existe um paciente com este e-mail' });
+  }
+
+  res.status(500).json({ erro: 'Erro interno do servidor' });
+}
 
 // READ (lista) — GET /pacientes
-app.get('/pacientes', (req, res) => {
-  const nome = req.query.nome?.toLowerCase();
-  if (nome) {
-    const pacientesFiltrados = pacientes.filter((p) => p.nome.toLowerCase().includes(nome));
-    res.json(pacientesFiltrados);
-  }else {
-    return res.json(pacientes);
+app.get('/pacientes', async (req, res) => {
+  try {
+    const resultado = await pool.query(`SELECT ${COLUNAS} FROM pacientes ORDER BY id`);
+    res.json(resultado.rows);
+  } catch (erro) {
+    tratarErro(res, erro);
   }
-});
-
-//READ (total) - GET /pacientes/total
-app.get('/pacientes/total', (req, res) => {
-  const totalPacientes = pacientes.length;
-  res.json({ total: totalPacientes });
 });
 
 // READ (um) — GET /pacientes/:id
-app.get('/pacientes/:id', (req, res) => {
+app.get('/pacientes/:id', async (req, res) => {
   const id = Number(req.params.id);
-  const paciente = pacientes.find((p) => p.id === id);
 
-  if (!paciente) {
-    return res.status(404).json({ erro: 'Paciente não encontrado' });
+  if (!idValido(id)) {
+    return res.status(400).json({ erro: 'ID inválido' });
   }
 
-  res.json(paciente);
+  try {
+    const resultado = await pool.query(
+      `SELECT ${COLUNAS} FROM pacientes WHERE id = $1`,
+      [id]
+    );
+
+    if (resultado.rowCount === 0) {
+      return res.status(404).json({ erro: 'Paciente não encontrado' });
+    }
+
+    res.json(resultado.rows[0]);
+  } catch (erro) {
+    tratarErro(res, erro);
+  }
 });
 
 // CREATE — POST /pacientes
-app.post('/pacientes', (req, res) => {
-  const { nome, email, nascimento } = req.body ?? {};
-
-  //Verifica preenchimento dos campos obrigatórios
-  if (!nome || !email || !nascimento) {
+app.post('/pacientes', async (req, res) => {
+  if (!dadosValidos(req.body)) {
     return res.status(400).json({ erro: 'Nome, e-mail e nascimento são obrigatórios' });
   }
 
-  //Verifica se a data de nascimento é válida
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0); // Zera a hora para comparar apenas a data
-  const dataNascimento = new Date(nascimento);
+  const { nome, email, nascimento } = req.body;
 
-  if (dataNascimento > hoje) {
-    return res.status(409).json({ erro: 'Data de nascimento inválida' });
+  try {
+    const resultado = await pool.query(
+      `INSERT INTO pacientes (nome, email, nascimento)
+       VALUES ($1, $2, $3)
+       RETURNING ${COLUNAS}`,
+      [nome, email, nascimento]
+    );
+
+    res.status(201).json(resultado.rows[0]);
+  } catch (erro) {
+    tratarErro(res, erro);
   }
-
-  //Verifica se o email é válido
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return res.status(409).json({ erro: 'E-mail inválido' });
-  }
-
-  //Verifica se o e-mail já está cadastrado
-  if (pacientes.some((p) => p.email === email)) {
-    return res.status(409).json({ erro: 'E-mail já cadastrado' });
-  }
-
-  const novoPaciente = { id: proximoId++, nome, email, nascimento };
-  pacientes.push(novoPaciente);
-
-  res.status(201).json(novoPaciente);
 });
 
 // UPDATE — PUT /pacientes/:id
-app.put('/pacientes/:id', (req, res) => {
+app.put('/pacientes/:id', async (req, res) => {
   const id = Number(req.params.id);
-  const paciente = pacientes.find((p) => p.id === id);
 
-  if (!paciente) {
-    return res.status(404).json({ erro: 'Paciente não encontrado' });
+  if (!idValido(id)) {
+    return res.status(400).json({ erro: 'ID inválido' });
   }
 
-  const { nome, email, nascimento } = req.body ?? {};
-
-  if (!nome || !email || !nascimento) {
+  if (!dadosValidos(req.body)) {
     return res.status(400).json({ erro: 'Nome, e-mail e nascimento são obrigatórios' });
   }
 
-  paciente.nome = nome;
-  paciente.email = email;
-  paciente.nascimento = nascimento;
+  const { nome, email, nascimento } = req.body;
 
-  res.json(paciente);
+  try {
+    const resultado = await pool.query(
+      `UPDATE pacientes
+          SET nome = $1, email = $2, nascimento = $3
+        WHERE id = $4
+        RETURNING ${COLUNAS}`,
+      [nome, email, nascimento, id]
+    );
+
+    if (resultado.rowCount === 0) {
+      return res.status(404).json({ erro: 'Paciente não encontrado' });
+    }
+
+    res.json(resultado.rows[0]);
+  } catch (erro) {
+    tratarErro(res, erro);
+  }
 });
 
 // DELETE — DELETE /pacientes/:id
-app.delete('/pacientes/:id', (req, res) => {
+app.delete('/pacientes/:id', async (req, res) => {
   const id = Number(req.params.id);
-  const indice = pacientes.findIndex((p) => p.id === id);
 
-  if (indice === -1) {
-    return res.status(404).json({ erro: 'Paciente não encontrado' });
+  if (!idValido(id)) {
+    return res.status(400).json({ erro: 'ID inválido' });
   }
 
-  pacientes.splice(indice, 1);
+  try {
+    const resultado = await pool.query('DELETE FROM pacientes WHERE id = $1', [id]);
 
-  res.status(204).send(); // 204 = deu certo, e não há corpo na resposta
+    if (resultado.rowCount === 0) {
+      return res.status(404).json({ erro: 'Paciente não encontrado' });
+    }
+
+    res.status(204).send();
+  } catch (erro) {
+    tratarErro(res, erro);
+  }
 });
 
-// Em produção (Render) a porta vem da variável de ambiente PORT
 const PORTA = process.env.PORT || 3000;
 
 app.listen(PORTA, () => {
